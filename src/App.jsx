@@ -1,4 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  WiHumidity,
+  WiStrongWind,
+  WiSunrise,
+  WiSunset,
+  WiBarometer,
+  WiThermometer,
+  WiThermometerExterior,
+  WiWindDeg,
+} from 'weather-icons-react';
 // import api from "./services/api";
 
 const api = {
@@ -9,14 +19,24 @@ const api = {
 function App() {
   const [query, setQuery] = useState('');
   const [weather, setWeather] = useState({});
+  const [feelsLike, setFeelsLike] = useState('');
+  const [wind, setWind] = useState('');
+  const [humidity, setHumidity] = useState('');
+  const [pressure, setPressure] = useState('');
+  const [tempMax, setTempMax] = useState('');
+  const [tempMin, setTempMin] = useState('');
+  const [sunrise, setSunrise] = useState('');
+  const [sunset, setSunset] = useState('');
+  const [visibility, setVisibility] = useState('');
 
-  const search = eveniment => {
-    if (eveniment.key === 'Enter') {
+  const search = event => {
+    if (event.key === 'Enter') {
       fetch(`${api.base}weather?q=${query}&units=metric&APPID=${api.key}`)
         .then(res => res.json())
         .then(result => {
           setWeather(result);
           setQuery('');
+
           console.log(result);
         });
     }
@@ -55,6 +75,26 @@ function App() {
     return `${day} ${date} ${month} ${year}`;
   };
 
+  useEffect(() => {
+    if (Object.keys(weather).length !== 0) {
+      setFeelsLike(Math.floor(weather.main.feels_like) + ' ℃');
+      setWind(weather.wind.speed + ' m/s');
+      setHumidity(weather.main.humidity + '%');
+      setPressure(weather.main.pressure + ' hPa');
+      setTempMax(Math.floor(weather.main.temp_max) + ' ℃');
+      setTempMin(Math.floor(weather.main.temp_min) + ' ℃');
+      setVisibility(weather.visibility + ' m');
+
+      const sunriseTime = new Date(
+        weather.sys.sunrise * 1000
+      ).toLocaleTimeString();
+      const sunsetTime = new Date(
+        weather.sys.sunset * 1000
+      ).toLocaleTimeString();
+      setSunrise(sunriseTime);
+      setSunset(sunsetTime);
+    }
+  }, [weather]);
   return (
     <div
       className={
@@ -66,10 +106,10 @@ function App() {
       }
     >
       <main>
-        <div className="search-box">
+        <div className="search">
           <input
             type="text"
-            className="search-bar"
+            className="search__bar"
             placeholder="Search..."
             onChange={e => setQuery(e.target.value)}
             value={query}
@@ -78,20 +118,80 @@ function App() {
         </div>
         {typeof weather.main != 'undefined' ? (
           <div>
-            <div className="location-box">
-              <div className="location">
+            <div className="location">
+              <div className="location__city">
                 {weather.name}, {weather.sys.country}
               </div>
-              <div className="date">{dateBuilder(new Date())}</div>
+              <div className="location__date">{dateBuilder(new Date())}</div>
             </div>
-            <div className="weather-box">
-              <div className="temp">{Math.round(weather.main.temp)}℃</div>
-              <div className="weather">{weather.weather[0].main}</div>
+            <div className="weather">
+              <div className="weather__temp">
+                {Math.round(weather.main.temp)}℃
+              </div>
+              <div className="weather__temp-feelslike">
+                Feels Like:
+                <span> {feelsLike}</span>
+              </div>
+              <div className="weather__sky">
+                {weather.weather[0].main}
+                <img
+                  src={`http://openweathermap.org/img/w/${weather.weather[0].icon}.png`}
+                  alt="icon"
+                />
+                <br /> {weather.weather[0].description}
+              </div>
             </div>
           </div>
         ) : (
           ''
         )}
+        {typeof weather.main != 'undefined' ? (
+          <div className="details">
+            <div className="details-left">
+              <div>
+                <WiStrongWind /> Wind speed:
+                <span> {wind}</span>
+              </div>
+
+              <div>
+                <WiThermometer /> Temp Max:
+                <span> {tempMax}</span>
+              </div>
+
+              <div>
+                <WiThermometerExterior /> Temp Min:
+                <span> {tempMin}</span>
+              </div>
+
+              <div>
+                <WiHumidity /> Humidity:
+                <span> {humidity}</span>
+              </div>
+            </div>
+
+            <div className="details-right">
+              <div>
+                <WiWindDeg /> Visibility:
+                <span> {visibility}</span>
+              </div>
+
+              <div>
+                <WiBarometer /> Pressure:
+                <span> {pressure}</span>
+              </div>
+
+              <div>
+                <WiSunrise /> Sunrise:
+                <span> {sunrise}</span>
+              </div>
+
+              <div>
+                <WiSunset /> Sunset:
+                <span> {sunset}</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </main>
     </div>
   );
