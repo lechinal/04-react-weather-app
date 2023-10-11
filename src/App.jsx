@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import {
   WiHumidity,
   WiStrongWind,
@@ -19,6 +20,9 @@ const api = {
 function App() {
   const [query, setQuery] = useState('');
   const [weather, setWeather] = useState({});
+  const [cityNotFound, setCityNotFound] = useState(false);
+  const [alreadySearched, setAlreadySearched] = useState(false);
+
   const [feelsLike, setFeelsLike] = useState('');
   const [wind, setWind] = useState('');
   const [humidity, setHumidity] = useState('');
@@ -34,10 +38,21 @@ function App() {
       fetch(`${api.base}weather?q=${query}&units=metric&APPID=${api.key}`)
         .then(res => res.json())
         .then(result => {
-          setWeather(result);
-          setQuery('');
-
-          console.log(result);
+          if (result.cod === '404') {
+            if (typeof weather.main !== 'undefined' || alreadySearched) {
+              setWeather({});
+              setAlreadySearched(true);
+            }
+            setCityNotFound(true);
+          } else {
+            setWeather(result);
+            setQuery('');
+            setCityNotFound(false);
+            setAlreadySearched(false);
+          }
+        })
+        .catch(() => {
+          alert('City not Found');
         });
     }
   };
@@ -115,6 +130,9 @@ function App() {
             value={query}
             onKeyDown={search}
           />
+          {typeof weather.main === 'undefined' && cityNotFound && (
+            <div className="search__error">City not found</div>
+          )}
         </div>
         {typeof weather.main != 'undefined' ? (
           <div>
@@ -137,6 +155,7 @@ function App() {
                 <img
                   src={`http://openweathermap.org/img/w/${weather.weather[0].icon}.png`}
                   alt="icon"
+                  width="100px"
                 />
                 <br /> {weather.weather[0].description}
               </div>
